@@ -1,0 +1,75 @@
+version: '3.9'
+services:
+  # postgres DB service
+  database:
+    image: postgres:16.1-alpine3.18
+    container_name: amazon-order-service-database
+    restart: always
+    ports:
+      - ${DB_FORWARD_PORT:-5432}:5432
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-admin}
+      - POSTGRES_DB=${DB_DATABASE:-product_order_db}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - amazon-order-service_shared_network
+  #pgAdmin
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: amazon-order-service-pgadmin
+    restart: always
+    ports:
+      - ${PGADMIN_FORWARD_PORT:-8888}:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - amazon-order-service_shared_network
+  # RabbitMQ service
+  rabbitmq:
+    container_name: amazon-order-service-rabbitmq
+    image: 'rabbitmq:3.8-management-alpine'
+    restart: always
+    ports:
+      - '${RABBITMQ_FORWARD_PORT:-5672}:5672'
+      - '${RABBITMQ_MANAGEMENT_FORWARD_PORT:-15672}:15672'
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USERNAME:-guest}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-guest}
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq/
+      - rabbitmq_logs:/var/log/rabbitmq
+    networks:
+      - amazon-order-service_shared_network
+  # Backend service
+  backend:
+    container_name: amazon-order-service-backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+    ports:
+      - ${APP_FORWARD_PORT:-8080}:${APP_PORT:-8080}
+    volumes:
+      - .:/app
+    networks:
+      - amazon-order-service_shared_network
+    restart: on-failure
+    tty: true
+    stdin_open: true
+    expose:
+      - ${APP_PORT:-8080}
+networks:
+  amazon-order-service_shared_network:
+    name: amazon-order-service_shared_network
+    external: true
+volumes:
+  pg_data: {}
+  pgadmin_data: {}
+  rabbitmq: {}
+  rabbitmq_logs: {}
+#docker network create amazon-order-service-shared-network

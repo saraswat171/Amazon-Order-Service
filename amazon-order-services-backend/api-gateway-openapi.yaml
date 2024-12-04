@@ -1,0 +1,109 @@
+
+openapi: 3.0.3
+info:
+  title: API Gateway
+  version: 1.0.0
+paths:
+  /api/v1/orders:
+    post:
+      tags:
+        - Orders
+      summary: Create an order through the API Gateway
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - order_id
+                - products_id
+                - customer_id
+                - billing_account_id
+                - billing_address
+                - shipping_address
+              properties:
+                order_id:
+                  type: string
+                  format: uuid
+                products_id:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                customer_id:
+                  type: string
+                  format: uuid
+                billing_account_id:
+                  type: string
+                  format: uuid
+                billing_address:
+                  type: string
+                shipping_address:
+                  type: string
+      responses:
+        '201':
+          description: Order created
+
+  /api/v1/products:
+    get:
+      tags:
+        - Products
+      summary: Retrieve a list of products with detailed information
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: A list of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    product_id:
+                      type: string
+                      format: uuid
+                    description:
+                      type: string
+                    price:
+                      type: number
+                    quantityOnHand:
+                      type: number
+
+  /api/v1/billing-accounts:
+    get:
+      tags:
+        - Billing Accounts
+      summary: Retrieve a list of billing accounts
+      responses:
+        '200':
+          description: A list of billing accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    billing_account_id:
+                      type: string
+                      format: uuid
+                    card_number:
+                      type: string
+                    availableBalance:
+                      type: number
